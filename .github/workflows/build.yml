@@ -1,0 +1,113 @@
+name: Build
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Vis Xcode-version
+        run: xcodebuild -version
+
+      - name: Regel-tests (straf, rank, meritter)
+        run: ./Tests/run.sh
+
+      - name: Installér værktøjer
+        run: brew install xcodegen ldid
+
+      - name: Generér Xcode-projekt
+        run: xcodegen generate
+
+      - name: Byg (Release, iphoneos, usigneret)
+        env:
+          APP_VERSION: 1.0.${{ github.run_number }}
+          APP_BUILD: ${{ github.run_number }}
+        run: |
+          set +e
+          xcodebuild \
+            -project TacticalTracker.xcodeproj \
+            -target TacticalTracker \
+            -configuration Release \
+            -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            MARKETING_VERSION="$APP_VERSION" \
+            CURRENT_PROJECT_VERSION="$APP_BUILD" \
+            build > build.log 2>&1
+          status=$?
+          set -e
+          if [ $status -ne 0 ]; then
+            echo "Build fejlede – fejl:"
+            grep -E "error:" build.log | sed -E 's#^.*/(App|Shared|Widget)/#\1/#' | sort -u | head -40 | while IFS= read -r line; do
+              echo "::error::$line"
+            done
+            tail -80 build.log
+            exit 1
+          fi
+          grep -E "warning:" build.log | sort -u | head -20 || true
+          echo "BUILD OK"
+
+      - name: Signér entitlements ind med ldid
+        run: |
+          APP=build/Release-iphoneos/TacticalTracker.app
+          APPEX=$APP/PlugIns/TacticalWidget.appex
+          ls -la "$APP" "$APPEX"
+          ldid -SWidget/TacticalWidget.entitlements "$APPEX/TacticalWidget"
+          ldid -SApp/TacticalTracker.entitlements "$APP/TacticalTracker"
+          echo "--- app entitlements ---"
+          ldid -e "$APP/TacticalTracker"
+          echo "--- widget entitlements ---"
+          ldid -e "$APPEX/TacticalWidget"
+          if ldid -e "$APP/TacticalTracker" | grep -q application-groups && ldid -e "$APPEX/TacticalWidget" | grep -q application-groups; then
+            echo "::notice::App Group-entitlements er med i både app og widget"
+          else
+            echo "::warning::App Group-entitlements mangler"
+          fi
+
+      - name: Pak .ipa
+        run: |
+          rm -rf Payload TacticalTracker.ipa
+          mkdir Payload
+          cp -R build/Release-iphoneos/TacticalTracker.app Payload/
+          zip -qry TacticalTracker.ipa Payload
+          ls -la TacticalTracker.ipa
+
+      - name: Lav SideStore-source
+        if: github.ref == 'refs/heads/main'
+        run: |
+          python3 .github/scripts/make_source.py TacticalTracker.ipa "1.0.${{ github.run_number }}" "${{ github.run_number }}" "$GITHUB_SHA" source.json
+          cat source.json
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: TacticalTracker-ipa
+          if-no-files-found: ignore
+          path: |
+            TacticalTracker.ipa
+            source.json
+
+      - name: Opdatér release "latest"
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag || true
+          git push origin :refs/tags/latest || true
+          gh release create latest TacticalTracker.ipa source.json \
+            --target "$GITHUB_SHA" \
+            --title "Tactical Tracker (seneste build)" \
+            --notes "Automatisk build af commit $GITHUB_SHA. Hent TacticalTracker.ipa og installér med AltStore eller SideStore – eller tilføj sourcen https://github.com/${{ github.repository }}/releases/download/latest/source.json"

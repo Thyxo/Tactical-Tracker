@@ -1,0 +1,92 @@
+name: TacticalTracker
+options:
+  bundleIdPrefix: com.thyxo
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+    CODE_SIGN_STYLE: Manual
+    DEVELOPMENT_TEAM: ""
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    SWIFT_STRICT_CONCURRENCY: minimal
+
+targets:
+  TacticalTracker:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+      - path: Shared
+      - path: Assets/Incoming
+        buildPhase: resources
+        excludes:
+          - "**/.gitkeep"
+          - "**/*.md"
+    dependencies:
+      - target: TacticalWidget
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Tactical
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleDevelopmentRegion: da
+        UILaunchScreen:
+          UIColorName: ""
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSSupportsLiveActivities: true
+        ITSAppUsesNonExemptEncryption: false
+        ALTAppGroups:
+          - group.com.thyxo.tacticaltracker
+        TacticalAppGroup: group.com.thyxo.tacticaltracker
+    entitlements:
+      path: App/TacticalTracker.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.thyxo.tacticaltracker
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.thyxo.tacticaltracker
+        PRODUCT_NAME: TacticalTracker
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+
+  TacticalWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Widget
+      - path: Shared
+      - path: Assets/Incoming
+        buildPhase: resources
+        excludes:
+          - "**/.gitkeep"
+          - "**/*.md"
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: Tactical
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        ALTAppGroups:
+          - group.com.thyxo.tacticaltracker
+        TacticalAppGroup: group.com.thyxo.tacticaltracker
+    entitlements:
+      path: Widget/TacticalWidget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.thyxo.tacticaltracker
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.thyxo.tacticaltracker.widget
+        PRODUCT_NAME: TacticalWidget
+        SKIP_INSTALL: YES
