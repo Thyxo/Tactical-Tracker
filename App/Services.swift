@@ -1,0 +1,369 @@
+import Foundation
+import UserNotifications
+import ActivityKit
+import SwiftData
+import SwiftUI
+import UIKit
+
+// MARK: - Lokale notifikationer (max 2 pr. dag, 7 dage frem)
+
+enum NotificationScheduler {
+    static var enabled: Bool {
+        get { UserDefaults.standard.object(forKey: "notificationsEnabled") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "notificationsEnabled") }
+    }
+
+    static var maxPerDay: Int {
+        get {
+            let v = UserDefaults.standard.integer(forKey: "maxRemindersPerDay")
+            return v == 0 ? Tuning.maxRemindersPerDay : v
+        }
+        set { UserDefaults.standard.set(newValue, forKey: "maxRemindersPerDay") }
+    }
+
+    static func requestAuthorization() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
+    }
+
+    private struct Planned {
+        let id: String
+        let components: DateComponents
+        let title: String
+        let body: String
+        let repeats: Bool
+    }
+
+    private static let lines: [String] = [
+        "Radio: %@ står stadig på listen. Over.",
+        "Briefing-påmindelse: %@. Én opgave ad gangen.",
+        "Holdet venter på status: %@.",
+        "Klar %@ og hold readiness oppe.",
+        "Kort melding: %@ mangler. Du kan godt.",
+    ]
+
+    static func reschedule(store: GameStore) {
+        let plan = buildPlan(store: store)
+        let isOn = enabled
+        let center = UNUserNotificationCenter.current()
+        center.getPendingNotificationRequests { reqs in
+            let ids = reqs.map(\.identifier).filter { $0.hasPrefix("tac-") }
+            center.removePendingNotificationRequests(withIdentifiers: ids)
+            guard isOn else { return }
+            for p in plan {
+                let content = UNMutableNotificationContent()
+                content.title = p.title
+                content.body = p.body
+                content.sound = .default
+                let trigger = UNCalendarNotificationTrigger(dateMatching: p.components, repeats: p.repeats)
+                center.add(UNNotificationRequest(identifier: p.id, content: content, trigger: trigger))
+            }
+        }
+    }
+
+    private static func buildPlan(store: GameStore) -> [Planned] {
+        guard store.profile.onboarded else { return [] }
+        let cal = Calendar.current
+        let now = Date()
+        let name = store.profile.callsign
+        let title = "\(store.rank.displayName) \(name) 🎖️"
+        var result: [Planned] = []
+
+        result.append(Planned(
+            id: "tac-backup",
+            components: DateComponents(hour: Tuning.backupReminderHour, weekday: Tuning.backupReminderWeekday),
+            title: title,
+            body: "Ugentlig sikring: tag en backup af din tjenestejournal. Det tager fem sekunder.",
+            repeats: true))
+
+        for offset in 0..<Tuning.reminderDaysAhead {
+            guard let date = cal.date(byAdding: .day, value: offset, to: cal.startOfDay(for: now)) else { continue }
+            let key = DayKey.key(for: date)
+
+            if store.service.onLeave {
+                var c = cal.dateComponents([.year, .month, .day], from: date)
+                c.hour = 18
+                c.minute = 0
+                if let d = cal.date(from: c), d > now {
+                    result.append(Planned(id: "tac-leave-\(key)", components: c, title: "Orlov 🏖️",
+                                          body: "Holdet savner dig. Løs én opgave, så begynder du at melde dig tilbage.",
+                                          repeats: false))
+                }
+                continue
+            }
+            if store.service.excusedDays.contains(key) { continue }
+
+            var due = store.scheduled(on: date).filter { $0.reminderEnabled }
+            if offset == 0 {
+                due = due.filter { store.count($0) < $0.timesPerDay }
+            }
+            let times = Array(Set(due.map(\.reminderMinutes))).sorted()
+            var chosen: [Int]
+            if times.count <= maxPerDay {
+                chosen = times
+            } else if maxPerDay == 1 {
+                chosen = [times[0]]
+            } else {
+                chosen = [times[0], times[times.count - 1]]
+            }
+            for (i, minutes) in chosen.enumerated() {
+                var c = cal.dateComponents([.year, .month, .day], from: date)
+                c.hour = minutes / 60
+                c.minute = minutes % 60
+                guard let fire = cal.date(from: c), fire > now else { continue }
+                let related = due.filter { abs($0.reminderMinutes - minutes) < 1 }
+                let habitName = (related.first ?? due.first)?.name.lowercased() ?? "en opgave"
+                let line = lines[DayKey.stableHash(key + "\(i)") % lines.count]
+                var body = String(format: line, habitName)
+                if related.count > 1 { body += " (og \(related.count - 1) mere)" }
+                result.append(Planned(id: "tac-\(key)-\(i)", components: c, title: title, body: body, repeats: false))
+            }
+        }
+        return result
+    }
+}
+
+// MARK: - Live Activity (lokal, ingen push)
+
+enum LiveActivityManager {
+    static var enabled: Bool {
+        get { UserDefaults.standard.object(forKey: "liveActivityEnabled") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "liveActivityEnabled") }
+    }
+
+    static func sync(store: GameStore) {
+        let attrs = MissionActivityAttributes(callsign: store.profile.callsign, rank: store.service.rank, dayKey: store.todayKey)
+        let habits = store.todayHabits.map { h in
+            LiveHabit(id: h.id.uuidString, name: h.name, icon: h.icon, target: h.timesPerDay,
+                      done: min(store.todayCounts[h.id] ?? 0, h.timesPerDay))
+        }
+        let state = MissionActivityAttributes.ContentState(
+            readiness: store.service.readiness, stateRaw: store.readinessState.rawValue,
+            done: store.todayDone, total: store.todayTotal, operation: store.operation,
+            message: LiveActivityContent.message(done: store.todayDone, total: store.todayTotal, operation: store.operation),
+            habits: habits)
+        let callsign = store.profile.callsign
+        let shouldShow = enabled && store.profile.onboarded && store.todayTotal > 0
+            && !store.service.onLeave && !store.isTodayExcused
+        let allDone = store.allDoneToday
+        let today = store.todayKey
+
+        Task {
+            for a in Activity<MissionActivityAttributes>.activities where a.attributes.dayKey != today || !shouldShow {
+                await a.end(nil, dismissalPolicy: .immediate)
+            }
+            guard shouldShow, ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+            let content = ActivityContent(state: state, staleDate: nil)
+            let current = Activity<MissionActivityAttributes>.activities.first { a in
+                a.attributes.dayKey == today && a.activityState == .active
+            }
+            if let current {
+                await LiveActivityContent.apply(state, to: current, callsign: callsign)
+            } else if !allDone {
+                _ = try? Activity<MissionActivityAttributes>.request(attributes: attrs, content: content, pushType: nil)
+            }
+        }
+    }
+}
+
+// MARK: - Backup (JSON)
+
+struct BackupFile: Codable {
+    struct ProfileDTO: Codable {
+        var callsign: String
+        var camoRaw: String
+        var skinRaw: String
+        var lastProcessedDayKey: String
+        var createdAt: Date
+    }
+
+    struct HabitDTO: Codable {
+        var id: UUID
+        var name: String
+        var icon: String
+        var category: String
+        var weekdays: [Int]
+        var timesPerDay: Int
+        var reminderEnabled: Bool
+        var reminderMinutes: Int
+        var createdAt: Date
+        var sortOrder: Int
+        var archived: Bool
+    }
+
+    struct LogDTO: Codable {
+        var habitID: UUID
+        var dayKey: String
+        var count: Int
+    }
+
+    struct ReportDTO: Codable {
+        var dayKey: String
+        var mood: Int
+        var note: String
+        var createdAt: Date
+    }
+
+    var app: String = "TacticalTracker"
+    var version: Int = 1
+    var exportedAt: Date
+    var profile: ProfileDTO
+    var service: ServiceState
+    var habits: [HabitDTO]
+    var logs: [LogDTO]
+    var reports: [ReportDTO]
+    var fits: [String: ItemFit]? = nil
+}
+
+enum BackupError: LocalizedError {
+    case unreadable
+    var errorDescription: String? { "Filen kunne ikke læses som en Tactical Tracker-backup." }
+}
+
+enum BackupManager {
+    static func makeFile(store: GameStore) throws -> URL {
+        let data = try encode(store: store)
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("TacticalTracker-backup-\(DayKey.key()).json")
+        try data.write(to: url, options: .atomic)
+        return url
+    }
+
+    static func encode(store: GameStore) throws -> Data {
+        let p = store.profile
+        let profile = BackupFile.ProfileDTO(callsign: p.callsign, camoRaw: p.camoRaw, skinRaw: p.skinRaw,
+                                            lastProcessedDayKey: p.lastProcessedDayKey, createdAt: p.createdAt)
+        let habits = ((try? store.context.fetch(FetchDescriptor<Habit>())) ?? []).map {
+            BackupFile.HabitDTO(id: $0.id, name: $0.name, icon: $0.icon, category: $0.categoryRaw, weekdays: $0.weekdays,
+                                timesPerDay: $0.timesPerDay, reminderEnabled: $0.reminderEnabled,
+                                reminderMinutes: $0.reminderMinutes, createdAt: $0.createdAt,
+                                sortOrder: $0.sortOrder, archived: $0.archived)
+        }
+        let logs = ((try? store.context.fetch(FetchDescriptor<HabitLog>())) ?? [])
+            .filter { $0.count > 0 }
+            .map { BackupFile.LogDTO(habitID: $0.habitID, dayKey: $0.dayKey, count: $0.count) }
+        let reports = store.allReports().map {
+            BackupFile.ReportDTO(dayKey: $0.dayKey, mood: $0.mood, note: $0.note, createdAt: $0.createdAt)
+        }
+        let file = BackupFile(exportedAt: Date(), profile: profile, service: store.service, habits: habits,
+                              logs: logs, reports: reports, fits: FitStore.shared.fits)
+        let enc = JSONEncoder()
+        enc.outputFormatting = [.prettyPrinted, .sortedKeys]
+        enc.dateEncodingStrategy = .iso8601
+        return try enc.encode(file)
+    }
+
+    static func restore(from url: URL, store: GameStore) throws {
+        let access = url.startAccessingSecurityScopedResource()
+        defer { if access { url.stopAccessingSecurityScopedResource() } }
+        let data = try Data(contentsOf: url)
+        try restore(data: data, store: store)
+    }
+
+    static func restore(data: Data, store: GameStore, refresh: Bool = true) throws {
+        let dec = JSONDecoder()
+        dec.dateDecodingStrategy = .iso8601
+        guard let file = try? dec.decode(BackupFile.self, from: data) else { throw BackupError.unreadable }
+
+        let ctx = store.context
+        try ctx.delete(model: Habit.self)
+        try ctx.delete(model: HabitLog.self)
+        try ctx.delete(model: MoodEntry.self)
+
+        for h in file.habits {
+            let m = Habit(name: h.name, icon: h.icon, category: HabitCategory(rawValue: h.category) ?? .other,
+                          weekdays: h.weekdays, timesPerDay: h.timesPerDay,
+                          reminderEnabled: h.reminderEnabled, reminderMinutes: h.reminderMinutes,
+                          sortOrder: h.sortOrder, createdAt: h.createdAt)
+            m.id = h.id
+            m.archived = h.archived
+            ctx.insert(m)
+        }
+        for l in file.logs { ctx.insert(HabitLog(habitID: l.habitID, dayKey: l.dayKey, count: l.count)) }
+        for r in file.reports {
+            let e = MoodEntry(dayKey: r.dayKey, mood: r.mood, note: r.note)
+            e.createdAt = r.createdAt
+            ctx.insert(e)
+        }
+
+        let p = store.profile
+        let d = file.profile
+        p.callsign = d.callsign
+        p.camoRaw = d.camoRaw
+        p.skinRaw = d.skinRaw
+        p.lastProcessedDayKey = d.lastProcessedDayKey
+        p.createdAt = d.createdAt
+        p.onboarded = true
+        p.lastBackup = Date()
+        store.service = file.service
+        p.storeService(file.service)
+
+        if let fits = file.fits { FitStore.shared.replaceAll(fits) }
+
+        try ctx.save()
+        guard refresh else { return }
+        store.reloadHabits()
+        store.onForeground()
+        store.refreshToday()
+        store.dataVersion += 1
+    }
+}
+
+// MARK: - Automatisk backup
+
+/// En stille kopi af alle data, som skrives ved hver ændring – både i appens egen mappe
+/// og i App Group-mappen. Forsvinder databasen, hentes operatøren tilbage herfra.
+enum AutoBackup {
+    static let fileName = "TacticalTracker-autobackup.json"
+
+    private static var urls: [URL] {
+        var list: [URL] = []
+        let fm = FileManager.default
+        if let support = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+            try? fm.createDirectory(at: support, withIntermediateDirectories: true)
+            list.append(support.appendingPathComponent(fileName))
+        }
+        if let docs = fm.urls(for: .documentDirectory, in: .userDomainMask).first {
+            list.append(docs.appendingPathComponent(".\(fileName)"))
+        }
+        let group = AppGroup.containerURL.appendingPathComponent(fileName)
+        if !list.contains(group) { list.append(group) }
+        return list
+    }
+
+    static func write(_ data: Data) {
+        for url in urls {
+            try? data.write(to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+        }
+    }
+
+    /// Den nyeste brugbare kopi.
+    static func latest() -> Data? {
+        let dec = JSONDecoder()
+        dec.dateDecodingStrategy = .iso8601
+        var best: (date: Date, data: Data)?
+        for url in urls {
+            guard let data = try? Data(contentsOf: url),
+                  let file = try? dec.decode(BackupFile.self, from: data) else { continue }
+            if best == nil || file.exportedAt > best!.date { best = (file.exportedAt, data) }
+        }
+        return best?.data
+    }
+
+    static func clear() {
+        for url in urls { try? FileManager.default.removeItem(at: url) }
+    }
+}
+
+// MARK: - Del-ark
+
+struct ActivityView: UIViewControllerRepresentable {
+    let items: [Any]
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+    func updateUIViewController(_ vc: UIActivityViewController, context: Context) {}
+}
+
+struct ShareFile: Identifiable {
+    let id = UUID()
+    let url: URL
+}
