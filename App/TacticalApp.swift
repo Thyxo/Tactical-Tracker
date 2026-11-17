@@ -77,6 +77,7 @@ enum AppTab: String, CaseIterable, Identifiable {
 struct MainView: View {
     @Environment(GameStore.self) private var store
     @State private var tab: AppTab = .mission
+    @State private var choosingModel = false
     @Namespace private var ns
 
     var body: some View {
@@ -109,6 +110,12 @@ struct MainView: View {
         }
         .sheet(isPresented: $store.showBackOnDuty) {
             BackOnDutyView().presentationDetents([.medium])
+        }
+        .sheet(isPresented: $choosingModel) {
+            ChooseModelSheet()
+        }
+        .onAppear {
+            if !UserDefaults.standard.bool(forKey: "modelChosen") { choosingModel = true }
         }
     }
 
@@ -149,5 +156,30 @@ struct MainView: View {
         )
         .padding(.horizontal, 12)
         .padding(.bottom, 4)
+    }
+}
+
+/// Vises én gang: vælg mellem figur-modellerne (kan altid ændres under ⚙️ → Figur).
+struct ChooseModelSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 14) {
+                Text("Vælg din operatør").font(.tac(24, .heavy)).foregroundStyle(Theme.text)
+                Text("Tryk på en model for at prøve den. Du kan altid skifte senere under profil → Figur.")
+                    .font(.tac(14, .medium)).foregroundStyle(Theme.textSoft)
+                    .multilineTextAlignment(.center)
+                ModelPicker()
+                Button("Vælg") {
+                    UserDefaults.standard.set(true, forKey: "modelChosen")
+                    dismiss()
+                }
+                .buttonStyle(SoftButtonStyle())
+            }
+            .padding(20)
+        }
+        .background(Theme.night.ignoresSafeArea())
+        .onDisappear { UserDefaults.standard.set(true, forKey: "modelChosen") }
     }
 }
