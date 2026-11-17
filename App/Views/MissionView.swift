@@ -62,7 +62,7 @@ struct MissionView: View {
                                tint: store.allDoneToday ? Theme.ready : Theme.tan, height: 26)
                     Text(store.allDoneToday ? "Mission complete" : "\(done) / \(total)")
                         .font(.tac(14, .bold))
-                        .foregroundStyle(done * 2 >= total ? .white : Theme.text)
+                        .foregroundStyle(done * 2 >= total ? Theme.onAccent : Theme.text)
                         .contentTransition(.numericText(value: Double(done)))
                 }
             }
@@ -174,7 +174,7 @@ struct MissionView: View {
                 Button { creating = true } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Theme.onAccent)
                         .frame(width: 34, height: 34)
                         .background(Circle().fill(Theme.tan))
                 }
@@ -217,7 +217,7 @@ struct MissionView: View {
             Spacer()
             Button("Gem") { settings = true }
                 .font(.tac(14, .bold))
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.onAccent)
                 .padding(.horizontal, 14).padding(.vertical, 7)
                 .background(Capsule().fill(Theme.tan))
         }
@@ -246,7 +246,7 @@ struct OperatorStage: View {
                             .font(.system(size: 18, weight: .semibold))
                             .foregroundStyle(Theme.text)
                             .frame(width: 34, height: 34)
-                            .background(Circle().fill(.white))
+                            .background(Circle().fill(Theme.surface))
                     }
                     .buttonStyle(BouncyStyle())
                 }
@@ -283,6 +283,6 @@ struct OperatorStage: View {
         .padding(.leading, 6)
         .padding(.trailing, 12)
         .padding(.vertical, 6)
-        .background(Capsule().fill(.white))
+        .background(Capsule().fill(Theme.surface))
     }
 }

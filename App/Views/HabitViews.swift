@@ -94,7 +94,7 @@ struct CheckButton: View {
                 } else {
                     CheckMarkShape()
                         .trim(from: 0, to: complete ? 1 : 0)
-                        .stroke(Color.white, style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round))
+                        .stroke(Theme.onAccent, style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round))
                         .padding(15)
                     if !complete {
                         CheckMarkShape()
@@ -135,7 +135,7 @@ struct RestingHabitRow: View {
                     .foregroundStyle(Theme.textSoft)
             }
             .padding(12)
-            .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.white.opacity(0.6)))
+            .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Theme.surface.opacity(0.6)))
         }
         .buttonStyle(BouncyStyle(scale: 0.97))
     }
@@ -185,7 +185,7 @@ struct HabitEditorView: View {
                                 } label: {
                                     Label(c.title, systemImage: c.symbol)
                                         .font(.tac(13, .bold))
-                                        .foregroundStyle(category == c ? .white : Theme.text)
+                                        .foregroundStyle(category == c ? Theme.onAccent : Theme.text)
                                         .frame(maxWidth: .infinity, minHeight: 38)
                                         .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
                                             .fill(category == c ? Theme.tan : Theme.panelHigh))
@@ -294,7 +294,7 @@ struct HabitEditorView: View {
         Button(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: 17, weight: .heavy))
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.onAccent)
                 .frame(width: 44, height: 44)
                 .background(Circle().fill(Theme.tan))
         }
@@ -357,7 +357,7 @@ struct WeekdayPicker: View {
                 } label: {
                     Text(d.1)
                         .font(.stencil(15, .heavy))
-                        .foregroundStyle(on ? .white : Theme.textSoft)
+                        .foregroundStyle(on ? Theme.onAccent : Theme.textSoft)
                         .frame(maxWidth: .infinity, minHeight: 40)
                         .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(on ? Theme.tan : Theme.panelHigh))
                 }
@@ -401,7 +401,7 @@ struct ReportView: View {
                                 Text(m.emoji).font(.system(size: choice == m ? 40 : 32))
                                 Text(m.label)
                                     .font(.tac(11, .bold))
-                                    .foregroundStyle(choice == m ? .white : Theme.textSoft)
+                                    .foregroundStyle(choice == m ? Theme.onAccent : Theme.textSoft)
                             }
                             .frame(maxWidth: .infinity, minHeight: 80)
                             .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -505,7 +505,7 @@ struct MissionCompleteView: View {
             .foregroundStyle(Theme.text)
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
-            .background(Capsule().fill(.white))
+            .background(Capsule().fill(Theme.surface))
     }
 }
 

@@ -28,6 +28,7 @@ struct MissionProvider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<MissionEntry>) -> Void) {
+        Theme.mode = ThemeMode.stored
         let snap = OperatorSnapshot.load() ?? .placeholder
         let now = Date()
         let cal = Calendar.current
@@ -56,7 +57,7 @@ struct MissionWidget: Widget {
 struct WidgetBackdrop: View {
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color.white, Theme.night], startPoint: .top, endPoint: .bottom)
+            LinearGradient(colors: [Theme.surface, Theme.night], startPoint: .top, endPoint: .bottom)
         }
     }
 }
@@ -243,7 +244,7 @@ struct MissionLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.leading) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(Rank(rawValue: context.attributes.rank)?.short ?? "")
-                            .font(.stencil(10, .heavy)).foregroundStyle(Theme.tanLight)
+                            .font(.stencil(10, .heavy)).foregroundStyle(Theme.islandAccent)
                         Text(context.attributes.callsign).font(.tac(14, .heavy)).foregroundStyle(.white).lineLimit(1)
                     }
                 }
@@ -265,8 +266,8 @@ struct MissionLiveActivity: Widget {
                                     Label("Løst", systemImage: "checkmark")
                                         .font(.tac(13, .heavy))
                                         .padding(.horizontal, 10).padding(.vertical, 5)
-                                        .background(Capsule().fill(Theme.tanLight))
-                                        .foregroundStyle(Theme.text)
+                                        .background(Capsule().fill(Theme.islandAccent))
+                                        .foregroundStyle(Theme.ink)
                                 }
                                 .foregroundStyle(.white)
                             }
@@ -281,7 +282,7 @@ struct MissionLiveActivity: Widget {
             } compactTrailing: {
                 Text("\(st.remaining)").font(.stencil(14, .heavy)).foregroundStyle(st.allDone ? Theme.ready : .white)
             } minimal: {
-                Text("\(st.remaining)").font(.stencil(13, .heavy)).foregroundStyle(Theme.tanLight)
+                Text("\(st.remaining)").font(.stencil(13, .heavy)).foregroundStyle(Theme.islandAccent)
             }
         }
     }

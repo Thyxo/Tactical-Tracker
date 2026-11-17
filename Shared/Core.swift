@@ -63,28 +63,60 @@ extension Color {
     }
 }
 
-/// Roligt, lyst farvetema (samme enkle stil som Sælliv) med dæmpede militærfarver.
-/// Navnene er bevaret fra første udkast: `night` = sidens baggrund, `panel` = kort, `tan` = accent.
+/// Udseende: mørkt (standard, den oprindelige taktiske palet) eller lyst (Sælliv-agtigt).
+enum ThemeMode: String, CaseIterable, Identifiable {
+    case dark, light
+    var id: String { rawValue }
+    var displayName: String { self == .dark ? "Mørk" : "Lys" }
+    static let storageKey = "themeMode"
+    /// Gemmes i App Group, så widget og Live Activity følger med.
+    static var stored: ThemeMode {
+        get { AppGroup.defaults.string(forKey: storageKey).flatMap(ThemeMode.init(rawValue:)) ?? .dark }
+        set { AppGroup.defaults.set(newValue.rawValue, forKey: storageKey) }
+    }
+}
+
+@Observable final class ThemeState {
+    static let shared = ThemeState()
+    var mode: ThemeMode = ThemeMode.stored
+}
+
+/// Farver. Samme navne i begge temaer: `night` = sidens baggrund, `panel` = kort, `tan` = accent.
 enum Theme {
+    /// Aktivt tema. Læses gennem et @Observable objekt, så alle skærme tegnes om, når det skiftes.
+    static var mode: ThemeMode {
+        get { ThemeState.shared.mode }
+        set { ThemeState.shared.mode = newValue }
+    }
+    static var isDark: Bool { mode == .dark }
+    private static func pick(_ dark: UInt32, _ light: UInt32) -> Color { Color(hex: isDark ? dark : light) }
+
     /// Baggrund og flader.
-    static let night = Color(hex: 0xF2F1EC)
-    static let panel = Color(hex: 0xFFFFFF)
-    static let panelHigh = Color(hex: 0xECEBE4)
-    static let line = Color(hex: 0xD8D6CC)
+    static var night: Color { pick(0x0F1418, 0xF2F1EC) }
+    static var panel: Color { pick(0x1A2128, 0xFFFFFF) }
+    static var panelHigh: Color { pick(0x242D36, 0xECEBE4) }
+    static var line: Color { pick(0x33404C, 0xD8D6CC) }
+    /// Små piller/knapper oven på scenen og kort.
+    static var surface: Color { pick(0x1A2128, 0xFFFFFF) }
     /// Tekst.
-    static let text = Color(hex: 0x2F3832)
-    static let textSoft = Color(hex: 0x858C84)
-    /// Accenter (dæmpede).
-    static let tan = Color(hex: 0x5F7356)
-    static let tanLight = Color(hex: 0xDDE5D5)
-    static let olive = Color(hex: 0x6E7B4F)
-    static let ready = Color(hex: 0x5AA572)
-    static let steady = Color(hex: 0x6A93B8)
-    static let amber = Color(hex: 0xD9A441)
-    static let alert = Color(hex: 0xD0645A)
-    static let violet = Color(hex: 0x9A90C8)
+    static var text: Color { pick(0xE8EDF0, 0x2F3832) }
+    static var textSoft: Color { pick(0x93A1AD, 0x858C84) }
+    /// Accent og tekst oven på accent.
+    static var tan: Color { pick(0xC8A86B, 0x5F7356) }
+    static var tanLight: Color { pick(0x2E2C24, 0xDDE5D5) }
+    static var onAccent: Color { pick(0x0F1418, 0xFFFFFF) }
+    static var olive: Color { Color(hex: 0x6E7B4F) }
+    static var ready: Color { pick(0x5FD08A, 0x5AA572) }
+    static var steady: Color { pick(0x58A6E8, 0x6A93B8) }
+    static var amber: Color { pick(0xF2B134, 0xD9A441) }
+    static var alert: Color { pick(0xE5534B, 0xD0645A) }
+    static var violet: Color { pick(0x9C8CF0, 0x9A90C8) }
     /// Mørk "skærm"-baggrund (scener, widget).
     static let ink = Color(hex: 0x1C2420)
+    /// Lys accent til Dynamic Island (altid sort baggrund).
+    static let islandAccent = Color(hex: 0xDDE5D5)
+    /// Skygge under kort (kun synlig i lyst tema).
+    static var shadow: Color { Color.black.opacity(isDark ? 0 : 1) }
     /// Figur.
     static let eye = Color(hex: 0x1E2328)
     static let metal = Color(hex: 0x3A4148)

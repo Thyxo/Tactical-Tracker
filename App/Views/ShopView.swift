@@ -61,7 +61,7 @@ struct ShopView: View {
                                 } label: {
                                     Label(c.title, systemImage: c.symbol)
                                         .font(.tac(12, .bold))
-                                        .foregroundStyle(category == c ? Color.white : Theme.text)
+                                        .foregroundStyle(category == c ? Theme.onAccent : Theme.text)
                                         .padding(.horizontal, 10).padding(.vertical, 7)
                                         .background(Capsule().fill(category == c ? Theme.tan : Theme.panel))
                                 }
@@ -107,7 +107,7 @@ struct ShopView: View {
             BurstView(trigger: celebrate, emojis: ["✨", "⭐️", "🎖️"], count: 10)
             if let message {
                 Text(message)
-                    .font(.tac(14, .bold)).foregroundStyle(.white)
+                    .font(.tac(14, .bold)).foregroundStyle(Theme.onAccent)
                     .padding(.horizontal, 12).padding(.vertical, 7)
                     .background(Capsule().fill(Theme.tan))
                     .frame(maxHeight: .infinity, alignment: .top)
@@ -200,7 +200,7 @@ struct ShopItemCard: View {
                         .padding(9)
                     if item.isSeasonal {
                         Text(item.isInSeason ? "Sæson" : item.seasonName)
-                            .font(.stencil(11, .heavy)).foregroundStyle(.white)
+                            .font(.stencil(11, .heavy)).foregroundStyle(Theme.onAccent)
                             .padding(.horizontal, 6).padding(.vertical, 3)
                             .background(Capsule().fill(item.isInSeason ? Theme.alert : Theme.line))
                             .padding(5)
@@ -226,7 +226,7 @@ struct ShopItemCard: View {
                     }
                 }
                 .font(.tac(13, .heavy))
-                .foregroundStyle(owned && equipped ? Theme.text : Color.white)
+                .foregroundStyle(owned && equipped ? Theme.text : Theme.onAccent)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
                 .background(Capsule().fill(buttonColor(owned: owned, equipped: equipped, locked: locked)))
@@ -237,7 +237,7 @@ struct ShopItemCard: View {
         .background(
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .fill(Theme.panel)
-                .shadow(color: .black.opacity(0.05), radius: 8, y: 3)
+                .shadow(color: Theme.shadow.opacity(0.05), radius: 8, y: 3)
         )
         .scaleEffect(selected ? 1.02 : 1)
         .animation(.spring(response: 0.35, dampingFraction: 0.7), value: selected)
@@ -306,7 +306,7 @@ struct ArmoryRack: View {
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .fill(LinearGradient(colors: [Theme.panelHigh, Theme.panel], startPoint: .top, endPoint: .bottom))
                 WeaponDisplayView(id: item.id, size: 130)
-                    .colorMultiply(owned ? .white : .black)
+                    .colorMultiply(owned ? Theme.onAccent : .black)
                     .opacity(owned ? 1 : 0.55)
                 if !owned {
                     Image(systemName: "lock.fill").font(.system(size: 14, weight: .bold)).foregroundStyle(Theme.textSoft)
@@ -351,7 +351,7 @@ struct WeaponDetailView: View {
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
                             .fill(RadialGradient(colors: [item.rarity.color.opacity(0.25), Theme.panel], center: .center, startRadius: 10, endRadius: 220))
                         WeaponDisplayView(id: item.id, size: 320)
-                            .colorMultiply(owned ? .white : .black)
+                            .colorMultiply(owned ? Theme.onAccent : .black)
                             .rotation3DEffect(.degrees(spin), axis: (x: 0, y: 1, z: 0))
                         BurstView(trigger: celebrate, emojis: ["✨", "⭐️"], count: 10)
                     }
@@ -375,7 +375,7 @@ struct WeaponDetailView: View {
                     if owned {
                         Button(store.isEquipped(item) ? "Læg i skabet" : "Bær på figuren") { store.equip(item) }
                             .buttonStyle(SoftButtonStyle(color: store.isEquipped(item) ? Theme.panelHigh : Theme.ready,
-                                                         foreground: store.isEquipped(item) ? Theme.text : Color.white))
+                                                         foreground: store.isEquipped(item) ? Theme.text : Theme.onAccent))
                     } else {
                         Button("Køb for \(item.price) credits") { buy() }
                             .buttonStyle(SoftButtonStyle(color: store.rankAllows(item) && store.service.credits >= item.price ? Theme.tan : Theme.line))

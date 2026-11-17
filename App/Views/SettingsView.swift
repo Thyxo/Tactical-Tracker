@@ -56,6 +56,12 @@ struct SettingsView: View {
                     .card()
 
                     VStack(alignment: .leading, spacing: 12) {
+                        SectionLabel(text: "Udseende", symbol: "circle.lefthalf.filled")
+                        ThemePicker()
+                    }
+                    .card()
+
+                    VStack(alignment: .leading, spacing: 12) {
                         SectionLabel(text: "Figur", symbol: "figure.stand")
                         Text("Vælg hvordan din operatør ser ud. Udstyret tilpasser sig automatisk.")
                             .font(.tac(13, .medium)).foregroundStyle(Theme.textSoft)
@@ -272,7 +278,7 @@ struct OnboardingView: View {
                                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { store.bodyModel = m }
                             }
                             .font(.tac(12, .bold))
-                            .foregroundStyle(store.bodyModel == m ? .white : Theme.text)
+                            .foregroundStyle(store.bodyModel == m ? Theme.onAccent : Theme.text)
                             .padding(.horizontal, 10).padding(.vertical, 8)
                             .frame(maxWidth: .infinity)
                             .background(Capsule().fill(store.bodyModel == m ? Theme.tan : Theme.panel))
@@ -315,7 +321,7 @@ struct OnboardingView: View {
                 Circle().fill(color).frame(width: 16, height: 16)
                 Text(title).font(.tac(12, .bold)).lineLimit(1)
             }
-            .foregroundStyle(selected ? Color.white : Theme.text)
+            .foregroundStyle(selected ? Theme.onAccent : Theme.text)
             .padding(.horizontal, 10).padding(.vertical, 8)
             .frame(maxWidth: .infinity)
             .background(Capsule().fill(selected ? Theme.tan : Theme.panel))
@@ -412,5 +418,47 @@ struct ModelPicker: View {
                 .buttonStyle(BouncyStyle(scale: 0.96))
             }
         }
+    }
+}
+
+/// Mørkt (oprindelig palet og base) eller lyst tema.
+struct ThemePicker: View {
+    @Environment(GameStore.self) private var store
+
+    var body: some View {
+        HStack(spacing: 10) {
+            ForEach(ThemeMode.allCases) { m in
+                let on = store.themeMode == m
+                Button {
+                    withAnimation(.easeInOut(duration: 0.3)) { store.themeMode = m }
+                } label: {
+                    VStack(spacing: 6) {
+                        HStack(spacing: 4) {
+                            ForEach(swatch(m), id: \.self) { c in
+                                Circle().fill(Color(hex: c)).frame(width: 16, height: 16)
+                            }
+                        }
+                        .padding(.horizontal, 10).padding(.vertical, 8)
+                        .background(Capsule().fill(Color(hex: m == .dark ? 0x0F1418 : 0xF2F1EC)))
+                        Text(m.displayName).font(.tac(15, .bold)).foregroundStyle(Theme.text)
+                    }
+                    .padding(10)
+                    .frame(maxWidth: .infinity)
+                    .background(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .fill(on ? Theme.tanLight : Theme.panelHigh))
+                    .overlay(alignment: .topTrailing) {
+                        if on {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 18)).foregroundStyle(Theme.tan).padding(6)
+                        }
+                    }
+                }
+                .buttonStyle(BouncyStyle(scale: 0.96))
+            }
+        }
+    }
+
+    private func swatch(_ m: ThemeMode) -> [UInt32] {
+        m == .dark ? [0x1A2128, 0xC8A86B, 0x5FD08A] : [0xFFFFFF, 0x5F7356, 0x5AA572]
     }
 }

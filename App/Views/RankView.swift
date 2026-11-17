@@ -49,7 +49,7 @@ struct RankView: View {
                     }
                     Spacer()
                     if current {
-                        Text("NU").font(.stencil(11, .heavy)).foregroundStyle(.white)
+                        Text("NU").font(.stencil(11, .heavy)).foregroundStyle(Theme.onAccent)
                             .padding(.horizontal, 8).padding(.vertical, 4)
                             .background(Capsule().fill(Theme.tan))
                     } else if reached {
@@ -104,7 +104,7 @@ struct RankView: View {
                     VStack(spacing: 4) {
                         Image(systemName: m.symbol)
                             .font(.system(size: 20, weight: .bold))
-                            .foregroundStyle(has ? Color.white : Theme.textSoft)
+                            .foregroundStyle(has ? Theme.onAccent : Theme.textSoft)
                             .frame(width: 46, height: 46)
                             .background(Circle().fill(has ? Theme.gold : Theme.panelHigh))
                         Text(m.name).font(.tac(9, .bold)).foregroundStyle(has ? Theme.text : Theme.textSoft)

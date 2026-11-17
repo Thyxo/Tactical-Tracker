@@ -32,6 +32,14 @@ final class GameStore {
             WidgetCenter.shared.reloadAllTimelines()
         }
     }
+    /// Mørkt (standard) eller lyst tema – gemmes i App Group, så widgetten følger med.
+    var themeMode: ThemeMode = ThemeMode.stored {
+        didSet {
+            ThemeMode.stored = themeMode
+            Theme.mode = themeMode
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
     /// Udviklermenu: tving en bestemt tilstand i visningen (nil = normal).
     var debugStateOverride: ReadinessState?
 

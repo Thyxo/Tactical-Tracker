@@ -43,5 +43,6 @@ Reglerne kan også ses i appen: **Rank → Regler & straf**.
 - `App/` – hovedappen · `Widget/` – widget + Live Activity · `Shared/` – kode der deles.
 - Regelmotoren (`Shared/Discipline.swift`) er ren Swift og testes uden Xcode: `./Tests/run.sh`.
 - App Group-ID'et læses ved runtime (AltStore/SideStore omskriver det).
+- Tema: mørkt (standard, oprindelig palet og baser) eller lyst – vælges under profil → Udseende.
 - Billeder: se [`ASSETS.md`](ASSETS.md). Uden billeder tegnes alt i kode.
 - CI bygger også `claude/**`-grene, men laver kun release fra `main`.

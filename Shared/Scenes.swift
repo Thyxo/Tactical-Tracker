@@ -4,7 +4,17 @@ import UIKit
 /// Baggrunde/baser. Bruger bg_<id>.png fra Assets/Incoming hvis den findes – ellers kodet scene.
 /// Rolig, lys og enkel stil (som Sælliv): få store flader, bløde gradienter, max én langsom animation.
 /// Nederste ~45 % holdes rolig (der står figuren), toppen simpel (piller og taleboble).
+/// Vælger scene efter tema: mørkt tema = den oprindelige base, lyst tema = den lyse.
 struct SceneBackground: View {
+    let id: String
+
+    var body: some View {
+        if Theme.isDark { DarkSceneBackground(id: id) } else { LightSceneBackground(id: id) }
+    }
+}
+
+/// Lys, rolig udgave.
+struct LightSceneBackground: View {
     let id: String
 
     var body: some View {

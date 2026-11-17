@@ -54,7 +54,7 @@ struct BurstView: View {
 
 struct SoftButtonStyle: ButtonStyle {
     var color: Color = Theme.tan
-    var foreground: Color = .white
+    var foreground: Color = Theme.onAccent
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -126,7 +126,7 @@ extension View {
             .background(
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
                     .fill(color)
-                    .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 4)
+                    .shadow(color: Theme.shadow.opacity(0.05), radius: 10, x: 0, y: 4)
             )
     }
 }
@@ -166,12 +166,12 @@ struct RadioBubble: View {
                 .multilineTextAlignment(.leading)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(.white))
+                .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Theme.surface))
             BubbleTail()
-                .fill(.white)
+                .fill(Theme.surface)
                 .frame(width: 16, height: 9)
         }
-        .shadow(color: .black.opacity(0.10), radius: 8, x: 0, y: 3)
+        .shadow(color: Theme.shadow.opacity(0.10), radius: 8, x: 0, y: 3)
     }
 }
 
@@ -253,7 +253,7 @@ struct CreditsBadge: View {
         .foregroundStyle(Theme.text)
         .padding(.horizontal, 12)
         .padding(.vertical, 7)
-        .background(Capsule().fill(.white).shadow(color: .black.opacity(0.06), radius: 6, y: 2))
+        .background(Capsule().fill(Theme.surface).shadow(color: Theme.shadow.opacity(0.06), radius: 6, y: 2))
         .scaleEffect(bump % 2 == 1 ? 1.1 : 1)
         .onChange(of: credits) { old, new in
             guard new > old else { return }
@@ -303,10 +303,10 @@ struct ToastView: View {
     var body: some View {
         Text(text)
             .font(.tac(14, .bold))
-            .foregroundStyle(.white)
+            .foregroundStyle(Theme.onAccent)
             .padding(.horizontal, 14)
             .padding(.vertical, 9)
             .background(Capsule().fill(Theme.tan))
-            .shadow(color: .black.opacity(0.15), radius: 8, y: 3)
+            .shadow(color: Theme.shadow.opacity(0.15), radius: 8, y: 3)
     }
 }

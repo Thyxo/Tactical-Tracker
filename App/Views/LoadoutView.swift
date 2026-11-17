@@ -43,11 +43,11 @@ struct LoadoutView: View {
                     Text("\(store.service.equipped.count) stk. på")
                         .font(.stencil(12, .bold)).foregroundStyle(Theme.text)
                         .padding(.horizontal, 10).padding(.vertical, 6)
-                        .background(Capsule().fill(.white))
+                        .background(Capsule().fill(Theme.surface))
                     Spacer()
                     Button { fitting = true } label: {
                         Label("Tilpas", systemImage: "slider.horizontal.3")
-                            .font(.tac(13, .heavy)).foregroundStyle(.white)
+                            .font(.tac(13, .heavy)).foregroundStyle(Theme.onAccent)
                             .padding(.horizontal, 12).padding(.vertical, 7)
                             .background(Capsule().fill(Theme.tan))
                     }
@@ -117,7 +117,7 @@ struct LoadoutView: View {
                         repairAll()
                     } label: {
                         Label("Reparér alt \(store.totalRepairCost)", systemImage: "wrench.and.screwdriver.fill")
-                            .font(.tac(11, .heavy)).foregroundStyle(.white)
+                            .font(.tac(11, .heavy)).foregroundStyle(Theme.onAccent)
                             .padding(.horizontal, 8).padding(.vertical, 5)
                             .background(Capsule().fill(Theme.amber))
                     }
@@ -191,7 +191,7 @@ struct LoadoutView: View {
     private func chip(_ title: String, selected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title).font(.tac(12, .bold))
-                .foregroundStyle(selected ? Color.white : Theme.text)
+                .foregroundStyle(selected ? Theme.onAccent : Theme.text)
                 .padding(.horizontal, 10).padding(.vertical, 6)
                 .background(Capsule().fill(selected ? Theme.tan : Theme.panelHigh))
         }
@@ -227,7 +227,7 @@ struct EquippedRow: View {
             if cost > 0 {
                 Button { if !store.repair(item.id) { store.flash("Du mangler credits") } } label: {
                     Label("\(cost)", systemImage: "wrench.fill")
-                        .font(.stencil(11, .heavy)).foregroundStyle(.white)
+                        .font(.stencil(11, .heavy)).foregroundStyle(Theme.onAccent)
                         .padding(.horizontal, 7).padding(.vertical, 5)
                         .background(Capsule().fill(Theme.amber))
                 }
@@ -332,7 +332,7 @@ struct FitEditorView: View {
                             ItemThumb(item: item, size: 40)
                             Text(item.name).font(.tac(11, .bold)).lineLimit(1)
                         }
-                        .foregroundStyle(selected == item.id ? Color.white : Theme.text)
+                        .foregroundStyle(selected == item.id ? Theme.onAccent : Theme.text)
                         .frame(width: 78)
                         .padding(.vertical, 6)
                         .background(RoundedRectangle(cornerRadius: 12, style: .continuous)

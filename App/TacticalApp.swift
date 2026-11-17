@@ -45,7 +45,7 @@ struct RootView: View {
         }
         .environment(\.operatorModel, store.bodyModel)
         .animation(.easeInOut(duration: 0.5), value: store.profile.onboarded)
-        .preferredColorScheme(.light)
+        .preferredColorScheme(store.themeMode == .dark ? .dark : .light)
     }
 }
 
@@ -115,7 +115,7 @@ struct MainView: View {
             ChooseModelSheet()
         }
         .onAppear {
-            if !UserDefaults.standard.bool(forKey: "modelChosen") { choosingModel = true }
+            if !UserDefaults.standard.bool(forKey: "lookChosen") { choosingModel = true }
         }
     }
 
@@ -151,8 +151,8 @@ struct MainView: View {
         .padding(6)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(.white)
-                .shadow(color: .black.opacity(0.08), radius: 14, y: 4)
+                .fill(Theme.surface)
+                .shadow(color: Theme.shadow.opacity(0.08), radius: 14, y: 4)
         )
         .padding(.horizontal, 12)
         .padding(.bottom, 4)
@@ -166,13 +166,16 @@ struct ChooseModelSheet: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 14) {
-                Text("Vælg din operatør").font(.tac(24, .heavy)).foregroundStyle(Theme.text)
+                Text("Vælg din operatør og dit udseende").font(.tac(24, .heavy)).foregroundStyle(Theme.text)
                 Text("Tryk på en model for at prøve den. Du kan altid skifte senere under profil → Figur.")
                     .font(.tac(14, .medium)).foregroundStyle(Theme.textSoft)
                     .multilineTextAlignment(.center)
                 ModelPicker()
+                Text("Udseende").font(.tac(17, .bold)).foregroundStyle(Theme.text)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                ThemePicker()
                 Button("Vælg") {
-                    UserDefaults.standard.set(true, forKey: "modelChosen")
+                    UserDefaults.standard.set(true, forKey: "lookChosen")
                     dismiss()
                 }
                 .buttonStyle(SoftButtonStyle())
@@ -180,6 +183,6 @@ struct ChooseModelSheet: View {
             .padding(20)
         }
         .background(Theme.night.ignoresSafeArea())
-        .onDisappear { UserDefaults.standard.set(true, forKey: "modelChosen") }
+        .onDisappear { UserDefaults.standard.set(true, forKey: "lookChosen") }
     }
 }
