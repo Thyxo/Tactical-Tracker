@@ -54,23 +54,21 @@ struct BurstView: View {
 
 struct SoftButtonStyle: ButtonStyle {
     var color: Color = Theme.tan
-    var foreground: Color = Theme.night
+    var foreground: Color = .white
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.tac(17, .heavy))
-            .textCase(.uppercase)
-            .tracking(1)
+            .font(.tac(17, .bold))
             .foregroundStyle(foreground)
             .padding(.vertical, 15)
             .padding(.horizontal, 20)
             .frame(maxWidth: .infinity)
             .background(
                 ZStack {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(color.opacity(0.45))
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(color.opacity(0.5))
                         .offset(y: 4)
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
                         .fill(color)
                         .offset(y: configuration.isPressed ? 3 : 0)
                 }
@@ -98,9 +96,9 @@ struct AppearIn: ViewModifier {
     func body(content: Content) -> some View {
         content
             .opacity(shown ? 1 : 0)
-            .offset(y: shown ? 0 : 18)
+            .offset(y: shown ? 0 : 14)
             .onAppear {
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.8).delay(delay)) { shown = true }
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.85).delay(delay)) { shown = true }
             }
     }
 }
@@ -121,19 +119,19 @@ struct Wiggle: ViewModifier {
 extension View {
     func appearIn(_ delay: Double = 0) -> some View { modifier(AppearIn(delay: delay)) }
 
-    /// Mørkt panel med tynd kant.
-    func card(_ color: Color = Theme.panel, radius: CGFloat = 16) -> some View {
+    /// Hvidt kort med blød skygge – ingen kanter.
+    func card(_ color: Color = Theme.panel, radius: CGFloat = 22) -> some View {
         self
-            .padding(14)
+            .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
                     .fill(color)
-                    .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).stroke(Theme.line, lineWidth: 1))
+                    .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 4)
             )
     }
 }
 
-// MARK: - Skrivemaskine-tekst (radiobesked)
+// MARK: - Skrivemaskine-tekst
 
 struct TypewriterText: View {
     let text: String
@@ -152,28 +150,39 @@ struct TypewriterText: View {
             shown = 0
             for i in 0...text.count {
                 shown = i
-                try? await Task.sleep(nanoseconds: 18_000_000)
+                try? await Task.sleep(nanoseconds: 20_000_000)
             }
         }
     }
 }
 
+/// Taleboble fra operatøren (som Sællivs boble).
 struct RadioBubble: View {
     let text: String
 
     var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            Image(systemName: "antenna.radiowaves.left.and.right")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(Theme.ready)
-                .padding(.top, 2)
-            TypewriterText(text: text, font: .stencil(13, .semibold), color: Theme.text)
+        VStack(spacing: 0) {
+            TypewriterText(text: text, font: .tac(15, .semibold), color: Theme.text)
                 .multilineTextAlignment(.leading)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(.white))
+            BubbleTail()
+                .fill(.white)
+                .frame(width: 16, height: 9)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 9)
-        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.black.opacity(0.55)))
-        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(Theme.ready.opacity(0.35), lineWidth: 1))
+        .shadow(color: .black.opacity(0.10), radius: 8, x: 0, y: 3)
+    }
+}
+
+struct BubbleTail: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: r.minX, y: r.minY))
+        p.addLine(to: CGPoint(x: r.maxX, y: r.minY))
+        p.addLine(to: CGPoint(x: r.midX, y: r.maxY))
+        p.closeSubpath()
+        return p
     }
 }
 
@@ -189,39 +198,41 @@ struct CheckMarkShape: Shape {
     }
 }
 
-// MARK: - Segmenteret bjælke (readiness, stand, fremdrift)
+// MARK: - Fremgangsbjælke (blød, uden segmenter)
 
 struct SegmentBar: View {
     var progress: Double
     var tint: Color = Theme.ready
+    /// Bevaret for kompatibilitet – bjælken er nu glat.
     var segments: Int = 20
-    var height: CGFloat = 12
+    var height: CGFloat = 10
 
     var body: some View {
-        let filled = Int((min(1, max(0, progress)) * Double(segments)).rounded())
-        HStack(spacing: 2) {
-            ForEach(0..<segments, id: \.self) { i in
-                RoundedRectangle(cornerRadius: 2, style: .continuous)
-                    .fill(i < filled ? tint : Theme.panelHigh)
+        GeometryReader { g in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Theme.panelHigh)
+                Capsule()
+                    .fill(tint)
+                    .frame(width: max(progress > 0 ? height : 0, g.size.width * min(1, max(0, progress))))
             }
         }
         .frame(height: height)
-        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: filled)
+        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: progress)
     }
 }
 
-/// Lille sektionsoverskrift i stencil-stil.
+/// Sektionsoverskrift.
 struct SectionLabel: View {
     let text: String
     var symbol: String? = nil
 
     var body: some View {
         HStack(spacing: 6) {
-            if let symbol { Image(systemName: symbol) }
-            Text(text.uppercased()).tracking(1.5)
+            if let symbol { Image(systemName: symbol).font(.system(size: 14, weight: .semibold)) }
+            Text(text)
         }
-        .font(.stencil(12, .bold))
-        .foregroundStyle(Theme.textSoft)
+        .font(.tac(16, .bold))
+        .foregroundStyle(Theme.text)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
@@ -238,13 +249,12 @@ struct CreditsBadge: View {
                 .contentTransition(.numericText(value: Double(credits)))
                 .monospacedDigit()
         }
-        .font(.stencil(15, .heavy))
+        .font(.tac(16, .bold))
         .foregroundStyle(Theme.text)
-        .padding(.horizontal, 11)
-        .padding(.vertical, 6)
-        .background(Capsule().fill(Theme.panelHigh))
-        .overlay(Capsule().stroke(Theme.amber.opacity(0.4), lineWidth: 1))
-        .scaleEffect(bump % 2 == 1 ? 1.12 : 1)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background(Capsule().fill(.white).shadow(color: .black.opacity(0.06), radius: 6, y: 2))
+        .scaleEffect(bump % 2 == 1 ? 1.1 : 1)
         .onChange(of: credits) { old, new in
             guard new > old else { return }
             withAnimation(.spring(response: 0.25, dampingFraction: 0.5)) { bump += 1 }
@@ -263,22 +273,21 @@ struct RankInsignia: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: size * 0.22, style: .continuous)
-                .fill(Theme.panelHigh)
-                .overlay(RoundedRectangle(cornerRadius: size * 0.22, style: .continuous).stroke(Theme.tan.opacity(0.6), lineWidth: 1))
+            RoundedRectangle(cornerRadius: size * 0.3, style: .continuous)
+                .fill(Theme.tanLight)
             if rank == .recruit {
                 Circle().fill(Theme.tan).frame(width: size * 0.22)
             } else if rank.isOfficer {
                 HStack(spacing: size * 0.04) {
                     ForEach(0..<rank.chevrons, id: \.self) { _ in
-                        Image(systemName: "star.fill").font(.system(size: size * 0.32, weight: .black))
+                        Image(systemName: "star.fill").font(.system(size: size * 0.3, weight: .bold))
                     }
                 }
-                .foregroundStyle(Theme.gold)
+                .foregroundStyle(Theme.goldDark)
             } else {
                 VStack(spacing: -size * 0.12) {
                     ForEach(0..<rank.chevrons, id: \.self) { _ in
-                        Image(systemName: "chevron.up").font(.system(size: size * 0.42, weight: .black))
+                        Image(systemName: "chevron.up").font(.system(size: size * 0.4, weight: .heavy))
                     }
                 }
                 .foregroundStyle(Theme.tan)
@@ -288,16 +297,16 @@ struct RankInsignia: View {
     }
 }
 
-/// Lille "toast" øverst.
+/// Lille besked øverst.
 struct ToastView: View {
     let text: String
     var body: some View {
         Text(text)
             .font(.tac(14, .bold))
-            .foregroundStyle(Theme.night)
+            .foregroundStyle(.white)
             .padding(.horizontal, 14)
             .padding(.vertical, 9)
             .background(Capsule().fill(Theme.tan))
-            .shadow(color: .black.opacity(0.4), radius: 8, y: 3)
+            .shadow(color: .black.opacity(0.15), radius: 8, y: 3)
     }
 }

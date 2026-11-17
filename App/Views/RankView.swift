@@ -49,7 +49,7 @@ struct RankView: View {
                     }
                     Spacer()
                     if current {
-                        Text("NU").font(.stencil(11, .heavy)).foregroundStyle(Theme.night)
+                        Text("NU").font(.stencil(11, .heavy)).foregroundStyle(.white)
                             .padding(.horizontal, 8).padding(.vertical, 4)
                             .background(Capsule().fill(Theme.tan))
                     } else if reached {
@@ -58,7 +58,6 @@ struct RankView: View {
                 }
                 .padding(10)
                 .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(current ? Theme.tan.opacity(0.12) : Theme.panel))
-                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(current ? Theme.tan : Theme.line, lineWidth: 1))
             }
             if let next = store.rank.next, s.demotedFrom == nil {
                 let prev = store.rank.xpNeeded
@@ -88,7 +87,7 @@ struct RankView: View {
     private func stat(_ title: String, _ value: String) -> some View {
         VStack(spacing: 2) {
             Text(value).font(.stencil(20, .black)).foregroundStyle(Theme.text)
-            Text(title.uppercased()).font(.stencil(8, .bold)).foregroundStyle(Theme.textSoft).lineLimit(1).minimumScaleFactor(0.7)
+            Text(title).font(.stencil(11, .bold)).foregroundStyle(Theme.textSoft).lineLimit(1).minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
@@ -105,10 +104,9 @@ struct RankView: View {
                     VStack(spacing: 4) {
                         Image(systemName: m.symbol)
                             .font(.system(size: 20, weight: .bold))
-                            .foregroundStyle(has ? Theme.night : Theme.textSoft)
+                            .foregroundStyle(has ? Color.white : Theme.textSoft)
                             .frame(width: 46, height: 46)
                             .background(Circle().fill(has ? Theme.gold : Theme.panelHigh))
-                            .overlay(Circle().stroke(has ? Theme.goldDark : Theme.line, lineWidth: 2))
                         Text(m.name).font(.tac(9, .bold)).foregroundStyle(has ? Theme.text : Theme.textSoft)
                             .multilineTextAlignment(.center).lineLimit(2).minimumScaleFactor(0.8)
                     }
@@ -133,7 +131,7 @@ struct HeatmapCard: View {
             SectionLabel(text: "Sidste 5 uger", symbol: "calendar")
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 4) {
                 ForEach(0..<7, id: \.self) { i in
-                    Text(Self.days[i]).font(.stencil(9, .bold)).foregroundStyle(Theme.textSoft)
+                    Text(Self.days[i]).font(.stencil(11, .bold)).foregroundStyle(Theme.textSoft)
                 }
                 ForEach(7..<(7 + cells.count), id: \.self) { i in
                     RoundedRectangle(cornerRadius: 4, style: .continuous)

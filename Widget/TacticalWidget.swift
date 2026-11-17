@@ -56,8 +56,7 @@ struct MissionWidget: Widget {
 struct WidgetBackdrop: View {
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(hex: 0x161D23), Color(hex: 0x0E1317)], startPoint: .top, endPoint: .bottom)
-            GridLines().stroke(Color.white.opacity(0.04), lineWidth: 1)
+            LinearGradient(colors: [Color.white, Theme.night], startPoint: .top, endPoint: .bottom)
         }
     }
 }
@@ -107,7 +106,7 @@ struct MissionWidgetView: View {
         let r = snap.readiness / Tuning.readinessMax
         return GeometryReader { g in
             ZStack(alignment: .leading) {
-                Capsule().fill(Color.white.opacity(0.12))
+                Capsule().fill(Theme.panelHigh)
                 Capsule().fill(snap.state.tint).frame(width: max(4, g.size.width * r))
             }
         }
@@ -221,7 +220,7 @@ struct MissionWidgetView: View {
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 5)
-                    .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.white.opacity(0.06)))
+                    .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Theme.panelHigh.opacity(0.7)))
                 }
                 .buttonStyle(.plain)
             }
@@ -236,7 +235,7 @@ struct MissionLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: MissionActivityAttributes.self) { context in
             LockScreenMissionView(context: context)
-                .activityBackgroundTint(Color(hex: 0x10161B))
+                .activityBackgroundTint(Theme.night)
                 .activitySystemActionForegroundColor(Theme.tan)
         } dynamicIsland: { context in
             let st = context.state
@@ -244,7 +243,7 @@ struct MissionLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.leading) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(Rank(rawValue: context.attributes.rank)?.short ?? "")
-                            .font(.stencil(10, .heavy)).foregroundStyle(Theme.tan)
+                            .font(.stencil(10, .heavy)).foregroundStyle(Theme.tanLight)
                         Text(context.attributes.callsign).font(.tac(14, .heavy)).foregroundStyle(.white).lineLimit(1)
                     }
                 }
@@ -266,8 +265,8 @@ struct MissionLiveActivity: Widget {
                                     Label("Løst", systemImage: "checkmark")
                                         .font(.tac(13, .heavy))
                                         .padding(.horizontal, 10).padding(.vertical, 5)
-                                        .background(Capsule().fill(Theme.tan))
-                                        .foregroundStyle(Theme.night)
+                                        .background(Capsule().fill(Theme.tanLight))
+                                        .foregroundStyle(Theme.text)
                                 }
                                 .foregroundStyle(.white)
                             }
@@ -282,7 +281,7 @@ struct MissionLiveActivity: Widget {
             } compactTrailing: {
                 Text("\(st.remaining)").font(.stencil(14, .heavy)).foregroundStyle(st.allDone ? Theme.ready : .white)
             } minimal: {
-                Text("\(st.remaining)").font(.stencil(13, .heavy)).foregroundStyle(Theme.tan)
+                Text("\(st.remaining)").font(.stencil(13, .heavy)).foregroundStyle(Theme.tanLight)
             }
         }
     }
@@ -295,7 +294,7 @@ struct MissionSegments: View {
         let total = max(1, state.total)
         HStack(spacing: 2) {
             ForEach(0..<total, id: \.self) { i in
-                Capsule().fill(i < state.done ? Theme.ready : Color.white.opacity(0.18))
+                Capsule().fill(i < state.done ? Theme.ready : Color.gray.opacity(0.35))
             }
         }
     }
@@ -311,15 +310,15 @@ struct LockScreenMissionView: View {
                 Image(systemName: st.state.symbol)
                     .font(.system(size: 22, weight: .bold))
                     .foregroundStyle(st.state.tint)
-                Text("\(Int(st.readiness))").font(.stencil(13, .heavy)).foregroundStyle(.white)
-                Text("READY").font(.stencil(7, .bold)).foregroundStyle(.white.opacity(0.6))
+                Text("\(Int(st.readiness))").font(.stencil(13, .heavy)).foregroundStyle(Theme.text)
+                Text("READY").font(.stencil(7, .bold)).foregroundStyle(Theme.textSoft)
             }
             .frame(width: 50)
             VStack(alignment: .leading, spacing: 5) {
                 HStack {
                     Text(st.operation.uppercased()).font(.stencil(11, .heavy)).foregroundStyle(Theme.tan).lineLimit(1)
                     Spacer()
-                    Text("\(st.done)/\(st.total)").font(.stencil(13, .heavy)).foregroundStyle(.white)
+                    Text("\(st.done)/\(st.total)").font(.stencil(13, .heavy)).foregroundStyle(Theme.text)
                 }
                 MissionSegments(state: st).frame(height: 6)
                 if let next = st.next {
@@ -330,7 +329,7 @@ struct LockScreenMissionView: View {
                             Spacer()
                             Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.tan)
                         }
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Theme.text)
                     }
                     .buttonStyle(.plain)
                 } else {

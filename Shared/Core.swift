@@ -63,24 +63,28 @@ extension Color {
     }
 }
 
-/// Mørkt, taktisk farvetema.
+/// Roligt, lyst farvetema (samme enkle stil som Sælliv) med dæmpede militærfarver.
+/// Navnene er bevaret fra første udkast: `night` = sidens baggrund, `panel` = kort, `tan` = accent.
 enum Theme {
     /// Baggrund og flader.
-    static let night = Color(hex: 0x0F1418)
-    static let panel = Color(hex: 0x1A2128)
-    static let panelHigh = Color(hex: 0x242D36)
-    static let line = Color(hex: 0x33404C)
+    static let night = Color(hex: 0xF2F1EC)
+    static let panel = Color(hex: 0xFFFFFF)
+    static let panelHigh = Color(hex: 0xECEBE4)
+    static let line = Color(hex: 0xD8D6CC)
     /// Tekst.
-    static let text = Color(hex: 0xE8EDF0)
-    static let textSoft = Color(hex: 0x93A1AD)
-    /// Accenter.
-    static let tan = Color(hex: 0xC8A86B)
+    static let text = Color(hex: 0x2F3832)
+    static let textSoft = Color(hex: 0x858C84)
+    /// Accenter (dæmpede).
+    static let tan = Color(hex: 0x5F7356)
+    static let tanLight = Color(hex: 0xDDE5D5)
     static let olive = Color(hex: 0x6E7B4F)
-    static let ready = Color(hex: 0x5FD08A)
-    static let steady = Color(hex: 0x58A6E8)
-    static let amber = Color(hex: 0xF2B134)
-    static let alert = Color(hex: 0xE5534B)
-    static let violet = Color(hex: 0x9C8CF0)
+    static let ready = Color(hex: 0x5AA572)
+    static let steady = Color(hex: 0x6A93B8)
+    static let amber = Color(hex: 0xD9A441)
+    static let alert = Color(hex: 0xD0645A)
+    static let violet = Color(hex: 0x9A90C8)
+    /// Mørk "skærm"-baggrund (scener, widget).
+    static let ink = Color(hex: 0x1C2420)
     /// Figur.
     static let eye = Color(hex: 0x1E2328)
     static let metal = Color(hex: 0x3A4148)
@@ -92,13 +96,14 @@ enum Theme {
 }
 
 extension Font {
-    /// Skarp, let militær skrift (monospaced tal).
+    /// Rund, rolig skrift (som Sælliv).
     static func tac(_ size: CGFloat, _ weight: Font.Weight = .semibold) -> Font {
-        .system(size: size, weight: weight, design: .default)
+        .system(size: size, weight: weight, design: .rounded)
     }
 
+    /// Tal og korte koder – også runde, men lidt tungere.
     static func stencil(_ size: CGFloat, _ weight: Font.Weight = .heavy) -> Font {
-        .system(size: size, weight: weight, design: .monospaced)
+        .system(size: size, weight: weight, design: .rounded)
     }
 }
 

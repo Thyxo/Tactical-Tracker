@@ -56,6 +56,14 @@ struct SettingsView: View {
                     .card()
 
                     VStack(alignment: .leading, spacing: 12) {
+                        SectionLabel(text: "Figur", symbol: "figure.stand")
+                        Text("Vælg hvordan din operatør ser ud. Udstyret tilpasser sig automatisk.")
+                            .font(.tac(13, .medium)).foregroundStyle(Theme.textSoft)
+                        ModelPicker()
+                    }
+                    .card()
+
+                    VStack(alignment: .leading, spacing: 12) {
                         SectionLabel(text: "Påmindelser", symbol: "bell.fill")
                         Toggle(isOn: $notifications) { rowText("Radio-påmindelser") }
                             .tint(Theme.tan)
@@ -173,7 +181,8 @@ struct SettingsView: View {
         Button(action: action) {
             VStack(spacing: 4) {
                 Circle().fill(color).frame(width: 30, height: 30)
-                    .overlay(Circle().stroke(selected ? Theme.tan : Theme.line, lineWidth: selected ? 3 : 1))
+                    .padding(3)
+                    .background(Circle().fill(selected ? Theme.tan : Color.clear))
                 Text(title).font(.tac(10, .bold)).foregroundStyle(selected ? Theme.text : Theme.textSoft).lineLimit(1)
             }
             .frame(minWidth: 62)
@@ -257,6 +266,19 @@ struct OnboardingView: View {
                         }
                     }
                     .padding(.horizontal, 24)
+                    HStack(spacing: 6) {
+                        ForEach(BodyModel.allCases) { m in
+                            Button(m.displayName) {
+                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { store.bodyModel = m }
+                            }
+                            .font(.tac(12, .bold))
+                            .foregroundStyle(store.bodyModel == m ? .white : Theme.text)
+                            .padding(.horizontal, 10).padding(.vertical, 8)
+                            .frame(maxWidth: .infinity)
+                            .background(Capsule().fill(store.bodyModel == m ? Theme.tan : Theme.panel))
+                        }
+                    }
+                    .padding(.horizontal, 24)
                 }
             default:
                 text("Regler i korte træk",
@@ -280,7 +302,7 @@ struct OnboardingView: View {
 
     private func text(_ title: String, _ body: String) -> some View {
         VStack(spacing: 10) {
-            Text(title.uppercased()).font(.stencil(24, .black)).foregroundStyle(Theme.text).multilineTextAlignment(.center)
+            Text(title).font(.tac(26, .heavy)).foregroundStyle(Theme.text).multilineTextAlignment(.center)
             Text(body).font(.tac(15, .medium)).foregroundStyle(Theme.textSoft)
                 .multilineTextAlignment(.leading)
                 .padding(.horizontal, 28)
@@ -293,7 +315,7 @@ struct OnboardingView: View {
                 Circle().fill(color).frame(width: 16, height: 16)
                 Text(title).font(.tac(12, .bold)).lineLimit(1)
             }
-            .foregroundStyle(selected ? Theme.night : Theme.text)
+            .foregroundStyle(selected ? Color.white : Theme.text)
             .padding(.horizontal, 10).padding(.vertical, 8)
             .frame(maxWidth: .infinity)
             .background(Capsule().fill(selected ? Theme.tan : Theme.panel))
@@ -348,5 +370,47 @@ struct DeveloperView: View {
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Luk") { dismiss() } } }
         }
         .onAppear { readiness = store.service.readiness }
+    }
+}
+
+// MARK: - Vælg figur-model
+
+struct ModelPicker: View {
+    @Environment(GameStore.self) private var store
+    var camo: Camo? = nil
+    var skin: SkinTone? = nil
+
+    var body: some View {
+        LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+            ForEach(BodyModel.allCases) { m in
+                let on = store.bodyModel == m
+                Button {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { store.bodyModel = m }
+                } label: {
+                    VStack(spacing: 4) {
+                        OperatorFigure(camo: camo ?? store.profile.camo, skin: skin ?? store.profile.skin,
+                                       state: .ready, equipped: store.service.equipped,
+                                       animated: false, model: m)
+                            .frame(height: 130)
+                        Text(m.displayName).font(.tac(15, .bold)).foregroundStyle(Theme.text)
+                        Text(m.subtitle).font(.tac(11, .medium)).foregroundStyle(Theme.textSoft)
+                            .lineLimit(1).minimumScaleFactor(0.8)
+                    }
+                    .padding(10)
+                    .frame(maxWidth: .infinity)
+                    .background(RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(on ? Theme.tanLight : Theme.panelHigh))
+                    .overlay(alignment: .topTrailing) {
+                        if on {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 20))
+                                .foregroundStyle(Theme.tan)
+                                .padding(8)
+                        }
+                    }
+                }
+                .buttonStyle(BouncyStyle(scale: 0.96))
+            }
+        }
     }
 }

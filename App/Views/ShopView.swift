@@ -61,7 +61,7 @@ struct ShopView: View {
                                 } label: {
                                     Label(c.title, systemImage: c.symbol)
                                         .font(.tac(12, .bold))
-                                        .foregroundStyle(category == c ? Theme.night : Theme.text)
+                                        .foregroundStyle(category == c ? Color.white : Theme.text)
                                         .padding(.horizontal, 10).padding(.vertical, 7)
                                         .background(Capsule().fill(category == c ? Theme.tan : Theme.panel))
                                 }
@@ -70,8 +70,6 @@ struct ShopView: View {
                         }
                     }
                 }
-
-                rankHint
 
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
                     ForEach(Array(GearCatalog.items(in: category).enumerated()), id: \.element.id) { i, item in
@@ -109,7 +107,7 @@ struct ShopView: View {
             BurstView(trigger: celebrate, emojis: ["✨", "⭐️", "🎖️"], count: 10)
             if let message {
                 Text(message)
-                    .font(.tac(14, .bold)).foregroundStyle(Theme.night)
+                    .font(.tac(14, .bold)).foregroundStyle(.white)
                     .padding(.horizontal, 12).padding(.vertical, 7)
                     .background(Capsule().fill(Theme.tan))
                     .frame(maxHeight: .infinity, alignment: .top)
@@ -118,8 +116,7 @@ struct ShopView: View {
             }
         }
         .frame(height: 240)
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Theme.line, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .animation(.easeInOut(duration: 0.4), value: bg)
     }
 
@@ -194,18 +191,16 @@ struct ShopItemCard: View {
                     ItemThumb(item: item, size: 110)
                         .frame(maxWidth: .infinity)
                         .frame(height: 96)
-                        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.panelHigh))
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.panelHigh))
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                         .opacity(locked ? 0.45 : 1)
-                    Text(item.rarity.displayName.uppercased())
-                        .font(.stencil(8, .heavy))
-                        .foregroundStyle(Theme.night)
-                        .padding(.horizontal, 6).padding(.vertical, 3)
-                        .background(Capsule().fill(item.rarity.color))
-                        .padding(5)
+                    Circle()
+                        .fill(item.rarity.color)
+                        .frame(width: 9, height: 9)
+                        .padding(9)
                     if item.isSeasonal {
                         Text(item.isInSeason ? "Sæson" : item.seasonName)
-                            .font(.stencil(8, .heavy)).foregroundStyle(.white)
+                            .font(.stencil(11, .heavy)).foregroundStyle(.white)
                             .padding(.horizontal, 6).padding(.vertical, 3)
                             .background(Capsule().fill(item.isInSeason ? Theme.alert : Theme.line))
                             .padding(5)
@@ -231,20 +226,21 @@ struct ShopItemCard: View {
                     }
                 }
                 .font(.tac(13, .heavy))
-                .foregroundStyle(owned && equipped ? Theme.text : Theme.night)
+                .foregroundStyle(owned && equipped ? Theme.text : Color.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
                 .background(Capsule().fill(buttonColor(owned: owned, equipped: equipped, locked: locked)))
             }
             .buttonStyle(BouncyStyle())
         }
-        .padding(8)
+        .padding(10)
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .fill(Theme.panel)
-                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(selected ? Theme.tan : (equipped ? Theme.ready : item.rarity.color.opacity(0.3)), lineWidth: selected || equipped ? 2 : 1))
+                .shadow(color: .black.opacity(0.05), radius: 8, y: 3)
         )
+        .scaleEffect(selected ? 1.02 : 1)
+        .animation(.spring(response: 0.35, dampingFraction: 0.7), value: selected)
     }
 
     private func buttonColor(owned: Bool, equipped: Bool, locked: Bool) -> Color {
@@ -320,13 +316,13 @@ struct ArmoryRack: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 5) {
                     Circle().fill(item.rarity.color).frame(width: 7, height: 7)
-                    Text(item.rarity.displayName.uppercased()).font(.stencil(9, .heavy)).foregroundStyle(item.rarity.color)
+                    Text(item.rarity.displayName).font(.stencil(11, .heavy)).foregroundStyle(item.rarity.color)
                 }
                 Text(item.name).font(.tac(16, .heavy)).foregroundStyle(Theme.text)
                 Text(item.model).font(.tac(11, .medium)).foregroundStyle(Theme.textSoft).lineLimit(2)
                 if owned {
                     Text(store.isEquipped(item) ? "Bæres" : "I skabet")
-                        .font(.stencil(10, .bold)).foregroundStyle(store.isEquipped(item) ? Theme.ready : Theme.textSoft)
+                        .font(.stencil(12, .bold)).foregroundStyle(store.isEquipped(item) ? Theme.ready : Theme.textSoft)
                 } else {
                     Label("\(item.price)", systemImage: "creditcard.fill")
                         .font(.stencil(11, .bold)).foregroundStyle(Theme.amber)
@@ -336,7 +332,6 @@ struct ArmoryRack: View {
         }
         .padding(8)
         .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.panel))
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(item.rarity.color.opacity(owned ? 0.5 : 0.15), lineWidth: 1))
     }
 }
 
@@ -364,7 +359,7 @@ struct WeaponDetailView: View {
                     .onTapGesture { withAnimation(.spring(response: 0.8, dampingFraction: 0.7)) { spin += 360 } }
 
                     VStack(spacing: 6) {
-                        Text(item.rarity.displayName.uppercased()).font(.stencil(11, .heavy)).foregroundStyle(item.rarity.color)
+                        Text(item.rarity.displayName).font(.stencil(11, .heavy)).foregroundStyle(item.rarity.color)
                         Text(item.name).font(.tac(28, .heavy)).foregroundStyle(Theme.text)
                         Text(item.model).font(.tac(15, .semibold)).foregroundStyle(Theme.tan)
                         Text(item.blurb).font(.tac(14, .medium)).foregroundStyle(Theme.textSoft).multilineTextAlignment(.center)
@@ -380,7 +375,7 @@ struct WeaponDetailView: View {
                     if owned {
                         Button(store.isEquipped(item) ? "Læg i skabet" : "Bær på figuren") { store.equip(item) }
                             .buttonStyle(SoftButtonStyle(color: store.isEquipped(item) ? Theme.panelHigh : Theme.ready,
-                                                         foreground: store.isEquipped(item) ? Theme.text : Theme.night))
+                                                         foreground: store.isEquipped(item) ? Theme.text : Color.white))
                     } else {
                         Button("Køb for \(item.price) credits") { buy() }
                             .buttonStyle(SoftButtonStyle(color: store.rankAllows(item) && store.service.credits >= item.price ? Theme.tan : Theme.line))
@@ -398,7 +393,7 @@ struct WeaponDetailView: View {
     private func info(_ title: String, _ value: String) -> some View {
         VStack(spacing: 2) {
             Text(value).font(.tac(14, .heavy)).foregroundStyle(Theme.text).lineLimit(1).minimumScaleFactor(0.7)
-            Text(title.uppercased()).font(.stencil(9, .bold)).foregroundStyle(Theme.textSoft)
+            Text(title).font(.stencil(11, .bold)).foregroundStyle(Theme.textSoft)
         }
         .frame(maxWidth: .infinity)
         .card()

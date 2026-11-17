@@ -12,36 +12,34 @@ struct HabitRow: View {
     var body: some View {
         let done = store.count(habit)
         let complete = done >= habit.timesPerDay
-        HStack(spacing: 12) {
+        HStack(spacing: 14) {
             Button(action: onEdit) {
-                HStack(spacing: 12) {
+                HStack(spacing: 14) {
                     Text(habit.icon)
                         .font(.system(size: 26))
-                        .frame(width: 50, height: 50)
+                        .frame(width: 52, height: 52)
                         .background(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
                                 .fill(complete ? Theme.ready.opacity(0.18) : Theme.panelHigh)
                         )
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(String(format: "OPG. %02d · %@", index + 1, habit.category.title.uppercased()))
-                            .font(.stencil(10, .bold))
-                            .foregroundStyle(Theme.textSoft)
                         Text(habit.name)
                             .font(.tac(17, .bold))
                             .foregroundStyle(complete ? Theme.textSoft : Theme.text)
                             .strikethrough(complete, color: Theme.textSoft.opacity(0.6))
                             .lineLimit(2)
-                        HStack(spacing: 8) {
+                        HStack(spacing: 6) {
                             if habit.timesPerDay > 1 {
-                                Text("\(done)/\(habit.timesPerDay)")
+                                Text("\(done) af \(habit.timesPerDay)")
                                     .contentTransition(.numericText(value: Double(done)))
                             }
                             if habit.reminderEnabled {
-                                Label(habit.reminderText, systemImage: "bell.fill")
+                                Label(habit.reminderText, systemImage: "bell")
                             }
-                            Text("+\(Tuning.creditsPerCompletion) cr · +\(Tuning.xpPerCompletion) xp")
+                            Text("+\(Tuning.creditsPerCompletion)")
+                            Image(systemName: "creditcard")
                         }
-                        .font(.stencil(11, .semibold))
+                        .font(.tac(12, .medium))
                         .foregroundStyle(Theme.textSoft)
                     }
                     Spacer(minLength: 0)
@@ -57,15 +55,7 @@ struct HabitRow: View {
                 BurstView(trigger: burst, emojis: ["✨", "⭐️"], count: 5)
             }
         }
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Theme.panel)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(complete ? Theme.ready.opacity(0.45) : Theme.line, lineWidth: 1)
-                )
-        )
+        .card()
         .animation(.spring(response: 0.45, dampingFraction: 0.7), value: complete)
         .contextMenu {
             if done > 0 {
@@ -86,29 +76,31 @@ struct CheckButton: View {
         let progress = target > 0 ? Double(done) / Double(target) : 0
         Button(action: action) {
             ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(complete ? Theme.ready.opacity(0.55) : Theme.line)
+                    .offset(y: 3)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(complete ? Theme.ready : Theme.panelHigh)
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(complete ? Theme.ready : Theme.line, lineWidth: 2)
                 if target > 1 && !complete {
                     Circle()
                         .trim(from: 0, to: progress)
                         .stroke(Theme.tan, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                         .rotationEffect(.degrees(-90))
-                        .padding(12)
+                        .padding(13)
                     Text("\(done)")
-                        .font(.stencil(14, .heavy))
+                        .font(.tac(14, .bold))
                         .foregroundStyle(Theme.text)
                         .contentTransition(.numericText(value: Double(done)))
-                }
-                CheckMarkShape()
-                    .trim(from: 0, to: complete ? 1 : 0)
-                    .stroke(Theme.night, style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round))
-                    .padding(14)
-                if target == 1 && !complete {
+                } else {
                     CheckMarkShape()
-                        .stroke(Theme.line, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
-                        .padding(14)
+                        .trim(from: 0, to: complete ? 1 : 0)
+                        .stroke(Color.white, style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round))
+                        .padding(15)
+                    if !complete {
+                        CheckMarkShape()
+                            .stroke(Theme.line, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+                            .padding(15)
+                    }
                 }
             }
             .frame(width: 54, height: 54)
@@ -133,17 +125,17 @@ struct RestingHabitRow: View {
             HStack(spacing: 12) {
                 Text(habit.icon).font(.system(size: 20))
                     .frame(width: 38, height: 38)
-                    .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.panelHigh))
+                    .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.panelHigh))
                 Text(habit.name)
                     .font(.tac(15, .semibold))
                     .foregroundStyle(Theme.textSoft)
                 Spacer()
                 Text(WeekdayPicker.summary(habit.weekdays))
-                    .font(.stencil(11, .semibold))
+                    .font(.tac(12, .medium))
                     .foregroundStyle(Theme.textSoft)
             }
-            .padding(10)
-            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.panel.opacity(0.6)))
+            .padding(12)
+            .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.white.opacity(0.6)))
         }
         .buttonStyle(BouncyStyle(scale: 0.97))
     }
@@ -193,7 +185,7 @@ struct HabitEditorView: View {
                                 } label: {
                                     Label(c.title, systemImage: c.symbol)
                                         .font(.tac(13, .bold))
-                                        .foregroundStyle(category == c ? Theme.night : Theme.text)
+                                        .foregroundStyle(category == c ? .white : Theme.text)
                                         .frame(maxWidth: .infinity, minHeight: 38)
                                         .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
                                             .fill(category == c ? Theme.tan : Theme.panelHigh))
@@ -302,7 +294,7 @@ struct HabitEditorView: View {
         Button(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: 17, weight: .heavy))
-                .foregroundStyle(Theme.night)
+                .foregroundStyle(.white)
                 .frame(width: 44, height: 44)
                 .background(Circle().fill(Theme.tan))
         }
@@ -365,7 +357,7 @@ struct WeekdayPicker: View {
                 } label: {
                     Text(d.1)
                         .font(.stencil(15, .heavy))
-                        .foregroundStyle(on ? Theme.night : Theme.textSoft)
+                        .foregroundStyle(on ? .white : Theme.textSoft)
                         .frame(maxWidth: .infinity, minHeight: 40)
                         .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(on ? Theme.tan : Theme.panelHigh))
                 }
@@ -409,7 +401,7 @@ struct ReportView: View {
                                 Text(m.emoji).font(.system(size: choice == m ? 40 : 32))
                                 Text(m.label)
                                     .font(.tac(11, .bold))
-                                    .foregroundStyle(choice == m ? Theme.night : Theme.textSoft)
+                                    .foregroundStyle(choice == m ? .white : Theme.textSoft)
                             }
                             .frame(maxWidth: .infinity, minHeight: 80)
                             .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -463,16 +455,15 @@ struct MissionCompleteView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(hex: 0x16301F), Theme.night], startPoint: .top, endPoint: .bottom)
+            LinearGradient(colors: [Theme.tanLight, Theme.night], startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()
             VStack(spacing: 16) {
                 Spacer()
-                Text(store.operation.uppercased())
-                    .font(.stencil(13, .bold))
-                    .tracking(2)
-                    .foregroundStyle(Theme.ready)
-                Text("MISSION COMPLETE")
-                    .font(.stencil(30, .black))
+                Text(store.operation)
+                    .font(.tac(15, .semibold))
+                    .foregroundStyle(Theme.tan)
+                Text("Mission complete")
+                    .font(.tac(30, .heavy))
                     .foregroundStyle(Theme.text)
                     .scaleEffect(shown ? 1 : 0.6)
                     .opacity(shown ? 1 : 0)
@@ -514,7 +505,7 @@ struct MissionCompleteView: View {
             .foregroundStyle(Theme.text)
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
-            .background(Capsule().fill(Theme.panelHigh))
+            .background(Capsule().fill(.white))
     }
 }
 
@@ -569,7 +560,7 @@ struct DebriefView: View {
     private func stat(_ title: String, _ value: String, _ color: Color) -> some View {
         VStack(spacing: 4) {
             Text(value).font(.stencil(20, .heavy)).foregroundStyle(color)
-            Text(title.uppercased()).font(.stencil(10, .bold)).foregroundStyle(Theme.textSoft)
+            Text(title).font(.stencil(12, .bold)).foregroundStyle(Theme.textSoft)
         }
         .frame(maxWidth: .infinity)
         .card()
@@ -595,12 +586,12 @@ struct EventRow: View {
                 Text(event.title).font(.tac(15, .bold)).foregroundStyle(Theme.text)
                 Text(event.detail).font(.tac(13, .regular)).foregroundStyle(Theme.textSoft)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(event.dayKey).font(.stencil(10, .medium)).foregroundStyle(Theme.textSoft.opacity(0.7))
+                Text(event.dayKey).font(.stencil(12, .medium)).foregroundStyle(Theme.textSoft.opacity(0.7))
             }
             Spacer(minLength: 0)
         }
         .padding(12)
-        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.panel))
+        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Theme.panel))
     }
 
     private var symbol: String {

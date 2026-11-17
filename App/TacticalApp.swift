@@ -43,8 +43,9 @@ struct RootView: View {
                 OnboardingView().transition(.opacity)
             }
         }
+        .environment(\.operatorModel, store.bodyModel)
         .animation(.easeInOut(duration: 0.5), value: store.profile.onboarded)
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
     }
 }
 
@@ -122,17 +123,17 @@ struct MainView: View {
                             .font(.system(size: 18, weight: .bold))
                             .symbolEffect(.bounce, value: tab == t)
                         Text(t.title)
-                            .font(.tac(10, .bold))
+                            .font(.tac(11, .bold))
                             .lineLimit(1)
                             .minimumScaleFactor(0.7)
                     }
-                    .foregroundStyle(tab == t ? Theme.night : Theme.textSoft)
+                    .foregroundStyle(tab == t ? Theme.tan : Theme.textSoft)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
                     .background {
                         if tab == t {
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(Theme.tan)
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(Theme.tanLight)
                                 .matchedGeometryEffect(id: "tabPill", in: ns)
                         }
                     }
@@ -142,10 +143,9 @@ struct MainView: View {
         }
         .padding(6)
         .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Theme.panel)
-                .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Theme.line, lineWidth: 1))
-                .shadow(color: .black.opacity(0.4), radius: 12, y: 4)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(.white)
+                .shadow(color: .black.opacity(0.08), radius: 14, y: 4)
         )
         .padding(.horizontal, 12)
         .padding(.bottom, 4)
