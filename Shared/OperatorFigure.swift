@@ -16,6 +16,9 @@ struct OperatorFigure: View {
     var condition: [String: Double] = [:]
     /// Fremhæv en ting (tilpas-editoren).
     var highlight: String? = nil
+    /// Kropsmodel (nil = brugerens valg).
+    var model: BodyModel? = nil
+    @Environment(\.operatorModel) private var envModel
 
     var body: some View {
         GeometryReader { geo in
@@ -37,7 +40,8 @@ struct OperatorFigure: View {
 
     private func canvas(s: CGFloat, t: Double) -> some View {
         OperatorCanvas(camo: camo, skin: skin, state: state, equipped: equipped, s: s, t: t,
-                       animated: animated, fits: fits, condition: condition, highlight: highlight)
+                       animated: animated, fits: fits, condition: condition, highlight: highlight,
+                       model: model ?? envModel ?? BodyModel.current)
     }
 }
 
@@ -52,6 +56,7 @@ struct OperatorCanvas: View {
     var fits: [String: ItemFit]? = nil
     var condition: [String: Double] = [:]
     var highlight: String? = nil
+    var model: BodyModel = .soft
 
     private typealias M = Tuning.Motion
 
@@ -84,7 +89,12 @@ struct OperatorCanvas: View {
         }
     }
 
+    /// Billeder fra Assets/Incoming bruges kun til den model, de er lavet til (op_<model>_<state>.png),
+    /// eller til den klassiske model (op_<state>.png).
     private var bodyImage: UIImage? {
+        if let img = incomingImage("op_\(model.rawValue)_\(camo.rawValue)_\(state.rawValue)") { return img }
+        if let img = incomingImage("op_\(model.rawValue)_\(state.rawValue)") { return img }
+        guard model == .classic else { return nil }
         if let img = incomingImage("op_\(camo.rawValue)_\(state.rawValue)") { return img }
         return incomingImage("op_\(state.rawValue)")
     }
@@ -104,7 +114,7 @@ struct OperatorCanvas: View {
                 if let img = bodyImage {
                     Image(uiImage: img).resizable().scaledToFit().frame(width: s, height: s)
                 } else {
-                    OperatorBody(camo: camo, skin: skin, state: state, s: s, t: t, animated: animated)
+                    OperatorBodyView(model: model, camo: camo, skin: skin, state: state, s: s, t: t, animated: animated)
                 }
                 gearLayer
             }
@@ -113,7 +123,8 @@ struct OperatorCanvas: View {
             .rotationEffect(.degrees(sway), anchor: .bottom)
             .offset(y: bounce)
 
-            OperatorExtras(camo: camo, skin: skin, state: state, s: s, t: t, animated: animated)
+            OperatorExtras(camo: camo, skin: skin, state: state, s: s, t: t, animated: animated,
+                           geometry: model.geometry)
                 .frame(width: s, height: s)
         }
         .frame(width: s, height: s)
@@ -124,7 +135,8 @@ struct OperatorCanvas: View {
             ForEach(Array(visibleGear.enumerated()), id: \.element) { _, id in
                 if let item = GearCatalog.item(id), item.category != .background {
                     GearOnFigure(item: item, s: s, fit: fits?[id] ?? FitStore.shared.fit(id),
-                                 condition: condition[id] ?? 100, highlighted: highlight == id)
+                                 condition: condition[id] ?? 100, highlighted: highlight == id,
+                                 geometry: model.geometry)
                 }
             }
         }
@@ -139,13 +151,15 @@ struct GearOnFigure: View {
     let fit: ItemFit
     var condition: Double = 100
     var highlighted: Bool = false
+    var geometry: BodyGeometry = .reference
 
     var body: some View {
-        let a = item.category.anchor
-        let x: CGFloat = s * CGFloat(a.x)
-        let y: CGFloat = s * CGFloat(a.y)
+        let place = geometry.place(item.category)
+        let x: CGFloat = s * place.point.x
+        let y: CGFloat = s * place.point.y
         let worn: Double = max(0, (100 - condition) / 100)
         GearArt(item: item, s: s)
+            .scaleEffect(x: place.sx, y: place.sy)
             .saturation(1 - worn * 0.6)
             .opacity(1 - worn * 0.15)
             .shadow(color: highlighted ? Theme.amber.opacity(0.9) : .clear, radius: highlighted ? s * 0.012 : 0)

@@ -718,6 +718,23 @@ struct OperatorExtras: View {
     let s: CGFloat
     let t: Double
     let animated: Bool
+    /// Kropsmodellens mål – tilbehør flyttes fra referencefiguren til denne model.
+    var geometry: BodyGeometry = .reference
+
+    /// Flyt et lag tegnet til referencefiguren hen til samme sted på den valgte model.
+    private func mapped<V: View>(_ v: V, from a: CGPoint, to b: CGPoint, kx: CGFloat, ky: CGFloat) -> some View {
+        let dx: CGFloat = (b.x - a.x) * s
+        let dy: CGFloat = (b.y - a.y) * s
+        return v
+            .frame(width: s, height: s)
+            .scaleEffect(x: kx, y: ky, anchor: UnitPoint(x: a.x, y: a.y))
+            .offset(x: dx, y: dy)
+    }
+
+    private var headK: (CGFloat, CGFloat) {
+        let r = BodyGeometry.reference
+        return (geometry.headSize.width / r.headSize.width, geometry.headSize.height / r.headSize.height)
+    }
 
     private func pt(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
         OperatorGeometry.point(x, y, s: s)
@@ -731,13 +748,15 @@ struct OperatorExtras: View {
     @ViewBuilder private var content: some View {
         switch state {
         case .resting:
-            zzz
+            mapped(zzz, from: BodyGeometry.reference.headCenter, to: geometry.headCenter, kx: headK.0, ky: headK.1)
         case .suspended:
             stamp
         case .leave:
+            let r = BodyGeometry.reference
+            let k: CGFloat = geometry.torso.width / r.torso.width
             ZStack {
-                sunglasses
-                coffee
+                mapped(sunglasses, from: r.headCenter, to: geometry.headCenter, kx: headK.0, ky: headK.1)
+                mapped(coffee, from: r.rightHand, to: geometry.rightHand, kx: k, ky: k)
             }
         default:
             EmptyView()

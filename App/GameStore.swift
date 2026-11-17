@@ -25,6 +25,13 @@ final class GameStore {
     var rewardPulse = 0
     var dataVersion = 0
     var toast: String?
+    /// Valgt figur-model (gemmes i App Group, så widgetten følger med).
+    var bodyModel: BodyModel = BodyModel.current {
+        didSet {
+            BodyModel.current = bodyModel
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
     /// Udviklermenu: tving en bestemt tilstand i visningen (nil = normal).
     var debugStateOverride: ReadinessState?
 
