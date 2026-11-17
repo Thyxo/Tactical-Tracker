@@ -20,7 +20,9 @@ Animationer (vejrtrækning, vippen, blink) laves stadig i kode ovenpå.
 ## 1. Operatøren – 1024 × 1024, gennemsigtig PNG
 
 Figuren skal stå midt i billedet og følge koordinaterne i `Docs/DRAWING_CONTRACT.md` (hoved-top ca. 13 % fra toppen, øjne ca. 28 % nede, støvler ved ca. 95 %), så udstyret passer. **Intet udstyr på** (ingen hjelm/vest/våben) og ingen skygge – det lægges på i appen.
-Valgfrit pr. uniform: `op_<camo>_<tilstand>.png`, hvor camo er `black`, `navy`, `olive`, `coyote` eller `urban`.
+**Pr. figur-model:** Der er 4 modeller (`athletic`, `soft`, `icon`, `classic`). Billeder til en ny model hedder
+`op_<model>_<tilstand>.png`, fx `op_soft_steady.png` – og valgfrit pr. uniform `op_<model>_<camo>_<tilstand>.png`.
+Filnavnene i tabellen herunder (`op_<tilstand>.png`) gælder kun den klassiske model. Lav billeder til den model, du vælger i appen.
 
 | Filnavn | Tilstand | Udtryk |
 |---|---|---|
@@ -128,7 +130,7 @@ Hold den nederste midterste tredjedel rolig (der står figuren) og toppen enkel.
 | `App/Assets.xcassets/AppIcon.appiconset/AppIcon.png` | 1024×1024, **ikke** gennemsigtig | Hjemmeskærm (erstat placeholder-skjoldet) |
 
 ## Tjekliste – i alt
-- [ ] 7 × `op_*.png` (+ valgfrit 35 uniform-varianter)
+- [ ] 7 × `op_<model>_*.png` til den valgte model (+ valgfrit uniform-varianter)
 - [ ] 38 × `gear_*.png`
 - [ ] 15 × `wpn_*.png`
 - [ ] 4 × `bg_*.png`
